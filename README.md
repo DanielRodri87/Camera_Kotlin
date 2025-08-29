@@ -113,6 +113,11 @@ O aplicativo Android requer as seguintes permissões:
 - `android.permission.INTERNET` - Para enviar imagens pela rede
 - `android.permission.WRITE_EXTERNAL_STORAGE` - Para salvar temporariamente as imagens
 
+
+
+## PrintScreen Aplicação
+
+
 ## 📝 Notas
 
 - O servidor aceita conexões de qualquer endereço IP ("0.0.0.0")

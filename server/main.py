@@ -9,6 +9,7 @@ import io
 
 HOST = "0.0.0.0"
 PORT = 4400
+image_counter = 0  # Contador global de imagens
 
 # Função para receber a imagem via socket
 def receive_image(conn, frontend_callback):
@@ -130,7 +131,15 @@ def add_frame(image, frame_width=25, radius=20):
     frame.paste(rounded_image, (frame_width, frame_width), mask=rounded_image)
     return frame
 
-def display_image(image, image_name="Imagem.jpg"):
+def display_image(image):
+    global image_counter
+    image_counter += 1
+    
+    # Salvar imagem com nome sequencial
+    image_name = f"imagem_recebida{image_counter}.jpg"
+    image.save(image_name)
+    
+    # Redimensionar para exibição
     image.thumbnail((600, 600))
     framed_image = add_frame(image, frame_width=25, radius=20)
     tk_image = ImageTk.PhotoImage(framed_image)
