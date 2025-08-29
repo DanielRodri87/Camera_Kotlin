@@ -28,6 +28,11 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+/**
+ * Atividade principal do aplicativo que gerencia a captura e envio de imagens.
+ * Implementa funcionalidades de câmera usando CameraX e permite configurar
+ * as informações do servidor para envio das imagens.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -36,6 +41,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var settingsManager: SettingsManager
 
+    /**
+     * Inicializa a atividade, configura os listeners e inicia a câmera.
+     * Também verifica se é primeira execução para solicitar configurações do servidor.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -70,12 +79,20 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
     
+    /**
+     * Atualiza o texto de informação do servidor na interface
+     * com o IP e porta configurados.
+     */
     private fun updateServerInfoText() {
         val serverIp = settingsManager.getServerIp()
         val serverPort = settingsManager.getServerPort()
         binding.serverInfoText.text = getString(R.string.server_info, serverIp, serverPort)
     }
     
+    /**
+     * Exibe diálogo para configuração do servidor.
+     * @param isFirstRun indica se é primeira execução do app
+     */
     private fun showServerSettingsDialog(isFirstRun: Boolean) {
         val dialogBinding = DialogServerSettingsBinding.inflate(LayoutInflater.from(this))
         
@@ -123,6 +140,13 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    /**
+     * Captura uma foto usando CameraX, processa e envia para o servidor.
+     * O processamento inclui:
+     * - Redimensionamento para largura máxima de 1280px
+     * - Compressão JPEG com qualidade 80%
+     * As imagens são salvas temporariamente e depois removidas.
+     */
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
@@ -155,10 +179,32 @@ class MainActivity : AppCompatActivity() {
                         Snackbar.LENGTH_SHORT
                     ).show()
 
-                    // Envia para o servidor em background
+                    // Processa a imagem em background
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            NetworkClient.sendImage(photoFile, serverIp, serverPort)
+                            // Processar imagem
+                            val bitmap = android.graphics.BitmapFactory.decodeFile(photoFile.absolutePath)
+                            val processedBitmap = if (bitmap.width > 1280) {
+                                val ratio = 1280.0f / bitmap.width
+                                val newHeight = (bitmap.height * ratio).toInt()
+                                android.graphics.Bitmap.createScaledBitmap(bitmap, 1280, newHeight, true)
+                            } else {
+                                bitmap
+                            }
+
+                            // Salvar imagem processada
+                            val processedFile = File(photoFile.parentFile, "processed_${photoFile.name}")
+                            processedFile.outputStream().use { out ->
+                                processedBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, out)
+                            }
+
+                            // Enviar imagem processada
+                            NetworkClient.sendImage(processedFile, serverIp, serverPort)
+                            
+                            // Limpar arquivos temporários
+                            photoFile.delete()
+                            processedFile.delete()
+
                             runOnUiThread {
                                 Snackbar.make(
                                     binding.root,
@@ -167,14 +213,13 @@ class MainActivity : AppCompatActivity() {
                                 ).show()
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Erro ao enviar imagem: ${e.message}", e)
+                            Log.e(TAG, "Erro ao processar/enviar imagem: ${e.message}", e)
                             runOnUiThread {
                                 Snackbar.make(
                                     binding.root,
                                     getString(R.string.error_sending_image, e.message),
                                     Snackbar.LENGTH_LONG
                                 ).setAction(R.string.retry) {
-                                    // Tenta novamente
                                     takePhoto()
                                 }.show()
                             }
@@ -184,6 +229,10 @@ class MainActivity : AppCompatActivity() {
             })
     }
 
+    /**
+     * Inicializa e configura a câmera usando CameraX.
+     * Configura preview e captura de imagem.
+     */
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
@@ -204,10 +253,18 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    /**
+     * Verifica se todas as permissões necessárias foram concedidas.
+     * @return true se todas as permissões foram concedidas, false caso contrário
+     */
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Obtém o diretório para salvar as imagens temporárias.
+     * @return File apontando para o diretório de saída
+     */
     private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
@@ -234,9 +291,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Tag para logs */
         private const val TAG = "CameraXApp"
+        
+        /** Formato do nome do arquivo de imagem */
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        
+        /** Código de requisição para permissões */
         private const val REQUEST_CODE_PERMISSIONS = 10
+        
+        /** Lista de permissões necessárias */
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }

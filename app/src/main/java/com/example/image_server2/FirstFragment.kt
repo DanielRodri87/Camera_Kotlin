@@ -9,7 +9,8 @@ import androidx.navigation.fragment.findNavController
 import com.example.image_server2.databinding.FragmentFirstBinding
 
 /**
- * A simple [Fragment] subclass as the default destination in the navigation.
+ * Fragmento inicial do aplicativo.
+ * Implementa a primeira tela de navegação com um botão para navegar ao segundo fragmento.
  */
 class FirstFragment : Fragment() {
 

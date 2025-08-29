@@ -8,6 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.image_server2.databinding.FragmentSecondBinding
 
+/**
+ * Segundo fragmento do aplicativo.
+ * Implementa a segunda tela de navegação com um botão para retornar ao primeiro fragmento.
+ */
 class SecondFragment : Fragment() {
 
     private var _binding: FragmentSecondBinding? = null
