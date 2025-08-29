@@ -2,4 +2,22 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Material 3 theme colors -->
+    <color name="md_theme_primary">#006874</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#97F0FF</color>
+    <color name="md_theme_onPrimaryContainer">#001F24</color>
+    <color name="md_theme_secondary">#4A6267</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#CDE7EC</color>
+    <color name="md_theme_onSecondaryContainer">#051F23</color>
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_onErrorContainer">#410002</color>
+    <color name="md_theme_background">#FAFDFD</color>
+    <color name="md_theme_onBackground">#191C1D</color>
+    <color name="md_theme_surface">#FAFDFD</color>
+    <color name="md_theme_onSurface">#191C1D</color>
 </resources>

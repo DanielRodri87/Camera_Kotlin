@@ -7,10 +7,24 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     
-    <!-- Novas strings para câmera -->
+    <!-- Câmera e servidor -->
     <string name="capture">Capturar</string>
+    <string name="settings">Configurações</string>
     <string name="server_host">172.17.0.1</string>
     <string name="server_port">4400</string>
+    <string name="server_settings">Configurações do Servidor</string>
+    <string name="server_ip">Endereço IP</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="settings_saved">Configurações salvas</string>
+    <string name="invalid_port">Porta inválida</string>
+    <string name="server_info_placeholder">Servidor: Carregando...</string>
+    <string name="server_info">Servidor: %1$s:%2$d</string>
+    <string name="error_capture_photo">Erro ao capturar foto</string>
+    <string name="image_captured">Imagem capturada!</string>
+    <string name="image_sent_success">Imagem enviada com sucesso</string>
+    <string name="error_sending_image">Erro ao enviar: %1$s</string>
+    <string name="retry">Tentar novamente</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

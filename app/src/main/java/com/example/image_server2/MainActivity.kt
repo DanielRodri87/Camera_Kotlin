@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -14,6 +16,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.image_server2.databinding.ActivityMainBinding
+import com.example.image_server2.databinding.DialogServerSettingsBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,15 +34,21 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
-
-    // IP e porta do servidor Python
-    private val SERVER_HOST = "10.180.47.194"
-    private val SERVER_PORT = 4400
+    private lateinit var settingsManager: SettingsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        settingsManager = SettingsManager(this)
+        
+        // Verificar se é a primeira execução para mostrar o diálogo de configurações
+        if (settingsManager.isFirstRun()) {
+            showServerSettingsDialog(true)
+        } else {
+            updateServerInfoText()
+        }
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -50,9 +61,66 @@ class MainActivity : AppCompatActivity() {
         binding.captureButton.setOnClickListener {
             takePhoto()
         }
+        
+        binding.settingsButton.setOnClickListener {
+            showServerSettingsDialog(false)
+        }
 
         outputDirectory = getOutputDirectory()
         cameraExecutor = Executors.newSingleThreadExecutor()
+    }
+    
+    private fun updateServerInfoText() {
+        val serverIp = settingsManager.getServerIp()
+        val serverPort = settingsManager.getServerPort()
+        binding.serverInfoText.text = getString(R.string.server_info, serverIp, serverPort)
+    }
+    
+    private fun showServerSettingsDialog(isFirstRun: Boolean) {
+        val dialogBinding = DialogServerSettingsBinding.inflate(LayoutInflater.from(this))
+        
+        // Preencher com valores salvos
+        dialogBinding.ipAddressInput.setText(settingsManager.getServerIp())
+        dialogBinding.portInput.setText(settingsManager.getServerPort().toString())
+        
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val newIp = dialogBinding.ipAddressInput.text.toString()
+                val newPortStr = dialogBinding.portInput.text.toString()
+                
+                if (newIp.isNotEmpty() && newPortStr.isNotEmpty()) {
+                    try {
+                        val newPort = newPortStr.toInt()
+                        settingsManager.saveServerSettings(newIp, newPort)
+                        updateServerInfoText()
+                        
+                        if (isFirstRun) {
+                            settingsManager.setFirstRunCompleted()
+                        }
+                        
+                        Snackbar.make(
+                            binding.root,
+                            R.string.settings_saved,
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    } catch (e: NumberFormatException) {
+                        Toast.makeText(
+                            this,
+                            R.string.invalid_port,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            
+        if (!isFirstRun) {
+            dialog.setNegativeButton(R.string.cancel, null)
+        } else {
+            dialog.setCancelable(false)
+        }
+        
+        dialog.show()
     }
 
     private fun takePhoto() {
@@ -70,25 +138,45 @@ class MainActivity : AppCompatActivity() {
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Falha ao capturar foto: ${exc.message}", exc)
-                    Toast.makeText(baseContext, "Erro ao capturar foto", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        binding.root,
+                        R.string.error_capture_photo,
+                        Snackbar.LENGTH_LONG
+                    ).show()
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val msg = "Foto capturada: ${photoFile.absolutePath}"
-                    Log.d(TAG, msg)
-                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    val serverIp = settingsManager.getServerIp()
+                    val serverPort = settingsManager.getServerPort()
+                    
+                    Snackbar.make(
+                        binding.root,
+                        R.string.image_captured,
+                        Snackbar.LENGTH_SHORT
+                    ).show()
 
                     // Envia para o servidor em background
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            NetworkClient.sendImage(photoFile, SERVER_HOST, SERVER_PORT)
+                            NetworkClient.sendImage(photoFile, serverIp, serverPort)
                             runOnUiThread {
-                                Toast.makeText(baseContext, "Imagem enviada com sucesso", Toast.LENGTH_SHORT).show()
+                                Snackbar.make(
+                                    binding.root,
+                                    R.string.image_sent_success,
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Erro ao enviar imagem: ${e.message}", e)
                             runOnUiThread {
-                                Toast.makeText(baseContext, "Falha ao enviar imagem: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Snackbar.make(
+                                    binding.root,
+                                    getString(R.string.error_sending_image, e.message),
+                                    Snackbar.LENGTH_LONG
+                                ).setAction(R.string.retry) {
+                                    // Tenta novamente
+                                    takePhoto()
+                                }.show()
                             }
                         }
                     }
