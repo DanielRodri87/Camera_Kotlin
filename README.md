@@ -115,8 +115,22 @@ O aplicativo Android requer as seguintes permissões:
 
 
 
-## PrintScreen Aplicação
+## 📱 Prints da Aplicação
 
+### 📱 Aplicativo Android
+
+<div align="center">
+  <img src="prints_readme/image.png" width="300" alt="Tela Principal do App" style="margin-right: 20px;"/>
+  <img src="prints_readme/image1.png" width="300" alt="Configurações do App"/>
+</div>
+
+### 💻 Servidor Python
+
+![Servidor Aguardando Conexão](prints_readme/Captura%20de%20tela%20de%202025-08-29%2011-37-41.png)
+*Interface do servidor aguardando conexões*
+
+![Servidor Exibindo Imagem Recebida](prints_readme/Captura%20de%20tela%20de%202025-08-29%2011-40-40.png)
+*Servidor exibindo imagem recebida do dispositivo Android*
 
 ## 📝 Notas
 
